@@ -23,13 +23,17 @@ namespace twiliosvcc
 
             Console.WriteLine("Starting Bulk Notification Delivery");
 
+            var mobileServiceAppUrl = ConfigurationManager.AppSettings["MOBILESERVICEAPPURL"];
+
             var twilioClient = new TwilioRestClient(ConfigurationManager.AppSettings["ACCOUNTSID"], ConfigurationManager.AppSettings["AUTHTOKEN"]);
-            var amsClient = new MobileServiceClient(ConfigurationManager.AppSettings["MOBILESERVICEAPPURL"], ConfigurationManager.AppSettings["MOBILESERVICEAPPKEY"]);
+            var amsClient = new MobileServiceClient(mobileServiceAppUrl, ConfigurationManager.AppSettings["MOBILESERVICEAPPKEY"]);
 
             IMobileServiceTable<Notification> notificationsTable = amsClient.GetTable<Notification>();
 
             foreach (var notification in notifications)
-            {        
+            {
+                string notificationCallbackUrl = string.Format("{0}api/notificationCallback?guid={1}", mobileServiceAppUrl, notification.Guid);
+
                 //have we sent a notification to this phone number before?
                 //await notificationsTable.Where(n => n.PhoneNumber == notification.PhoneNumber).ToListAsync();
                 
@@ -44,7 +48,7 @@ namespace twiliosvcc
                     ConfigurationManager.AppSettings["FROM"], 
                     notification.PhoneNumber, 
                     notification.Message,
-                    string.Format("?guid={0}", notification.Guid));
+                    notificationCallbackUrl);
 
                 if (result.RestException != null)
                 {
