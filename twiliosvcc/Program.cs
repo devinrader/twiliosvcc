@@ -24,7 +24,7 @@ namespace twiliosvcc
             Console.WriteLine("Starting Bulk Notification Delivery");
 
             var twilioClient = new TwilioRestClient(ConfigurationManager.AppSettings["ACCOUNTSID"], ConfigurationManager.AppSettings["AUTHTOKEN"]);
-            var amsClient = new MobileServiceClient("", "");
+            var amsClient = new MobileServiceClient(ConfigurationManager.AppSettings["MOBILESERVICEAPPURL"], ConfigurationManager.AppSettings["MOBILESERVICEAPPKEY"]);
 
             IMobileServiceTable<Notification> notificationsTable = amsClient.GetTable<Notification>();
 
@@ -37,7 +37,7 @@ namespace twiliosvcc
 
                 //save this notification    
                 await notificationsTable.InsertAsync(notification);
-
+                
                 Console.WriteLine("Sending to {0}", notification.PhoneNumber);
 
                 var result = twilioClient.SendMessage(
