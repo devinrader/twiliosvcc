@@ -11,7 +11,10 @@ namespace twiliosvcc
     {
         public Notification()
         {
-            Status = "New";
+            this.Status = "New";
+            this.MessageSid = "";
+//            this.MessageStatus = "";
+            this.ErrorCode = "";
         }
 
         public string Id { get; set; }
@@ -25,7 +28,16 @@ namespace twiliosvcc
         [JsonProperty(PropertyName = "guid")]
         public string Guid { get; set; }
 
+        [JsonProperty(PropertyName = "messagesid")]
+        public string MessageSid { get; set; }
+
         [JsonProperty(PropertyName = "status")]
         public string Status { get; set; }
+
+        //[JsonProperty(PropertyName = "messagesstatus")]
+        //public string MessageStatus { get; set; }
+
+        [JsonProperty(PropertyName = "errorcode")]
+        public string ErrorCode { get; set; }        
     }
 }

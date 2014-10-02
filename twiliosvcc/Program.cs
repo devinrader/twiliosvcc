@@ -52,13 +52,16 @@ namespace twiliosvcc
 
                 if (result.RestException != null)
                 {
-                    Console.WriteLine(result.RestException.Message);
+                    Console.WriteLine("Error sending to API: '{0}'", result.RestException.Message);
                     notification.Status = "ApiFail";
                     await notificationsTable.UpdateAsync(notification);
                 }
                 else
                 {
-                    //if first message, send the instructions email
+                    Console.WriteLine("Sent to API: '{0}', Status: '{1}'", result.Sid, result.Status);
+                    notification.Status = result.Status;
+                    notification.MessageSid = result.Sid;
+                    await notificationsTable.UpdateAsync(notification);
                 }                              
             }
         }
