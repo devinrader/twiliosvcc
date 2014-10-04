@@ -32,6 +32,7 @@ namespace twiliosvcc
 
             foreach (var notification in notifications)
             {
+
                 string notificationCallbackUrl = string.Format("{0}api/notificationCallback?guid={1}", mobileServiceAppUrl, notification.Guid.Trim());
                 notification.Message = notification.Message.Trim() + "\r\n\r\nThe message delivered with care by Twilio. Check out twilio.com";
                 //have we sent a notification to this phone number before?
@@ -41,30 +42,38 @@ namespace twiliosvcc
 
                 //save this notification    
                 await notificationsTable.InsertAsync(notification);
-                
-                Console.WriteLine("Sending to {0}", notification.PhoneNumber);
 
-
-                var result = twilioClient.SendMessage(
-                    ConfigurationManager.AppSettings["FROM"], 
-                    notification.PhoneNumber.Trim(), 
-                    notification.Message,
-                    notificationCallbackUrl);
-
-                if (result.RestException != null)
+                //rudimentary data validation
+                if (string.IsNullOrEmpty(notification.PhoneNumber))
                 {
-                    Console.WriteLine("Error sending to API: '{0}'", result.RestException.Message);
-                    notification.Status = "ApiFail";
-                    notification.ErrorCode = result.RestException.Code;
+                    notification.Status = "InputFail";
                     await notificationsTable.UpdateAsync(notification);
                 }
                 else
                 {
-                    Console.WriteLine("Sent to API: '{0}', Status: '{1}'", result.Sid, result.Status);
-                    notification.Status = result.Status;
-                    notification.MessageSid = result.Sid;
-                    await notificationsTable.UpdateAsync(notification);
-                }                              
+                    Console.WriteLine("Sending to {0}", notification.PhoneNumber);
+
+                    var result = twilioClient.SendMessage(
+                        ConfigurationManager.AppSettings["FROM"],
+                        notification.PhoneNumber.Trim(),
+                        notification.Message,
+                        notificationCallbackUrl);
+
+                    if (result.RestException != null)
+                    {
+                        Console.WriteLine("Error sending to API: '{0}'", result.RestException.Message);
+                        notification.Status = "ApiFail";
+                        notification.ErrorCode = result.RestException.Code;
+                        await notificationsTable.UpdateAsync(notification);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Sent to API: '{0}', Status: '{1}'", result.Sid, result.Status);
+                        notification.Status = result.Status;
+                        notification.MessageSid = result.Sid;
+                        await notificationsTable.UpdateAsync(notification);
+                    }
+                }    
             }
         }
     }
