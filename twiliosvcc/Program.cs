@@ -33,7 +33,7 @@ namespace twiliosvcc
             foreach (var notification in notifications)
             {
                 string notificationCallbackUrl = string.Format("{0}api/notificationCallback?guid={1}", mobileServiceAppUrl, notification.Guid);
-
+                notification.Message = notification.Message + "\r\n\r\nThe message delivered with care by Twilio. Check out twilio.com";
                 //have we sent a notification to this phone number before?
                 //await notificationsTable.Where(n => n.PhoneNumber == notification.PhoneNumber).ToListAsync();
                 
@@ -43,6 +43,7 @@ namespace twiliosvcc
                 await notificationsTable.InsertAsync(notification);
                 
                 Console.WriteLine("Sending to {0}", notification.PhoneNumber);
+
 
                 var result = twilioClient.SendMessage(
                     ConfigurationManager.AppSettings["FROM"], 
