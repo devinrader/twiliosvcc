@@ -44,7 +44,7 @@ namespace twiliosvcc
                 await notificationsTable.InsertAsync(notification);
 
                 //rudimentary data validation
-                if (string.IsNullOrEmpty(notification.PhoneNumber))
+                if (string.IsNullOrEmpty(notification.PhoneNumber.Trim()))
                 {
                     notification.Status = "InputFail";
                     await notificationsTable.UpdateAsync(notification);
