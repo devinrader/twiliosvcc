@@ -55,6 +55,7 @@ namespace twiliosvcc
                 {
                     Console.WriteLine("Error sending to API: '{0}'", result.RestException.Message);
                     notification.Status = "ApiFail";
+                    notification.ErrorCode = result.RestException.Code;
                     await notificationsTable.UpdateAsync(notification);
                 }
                 else
