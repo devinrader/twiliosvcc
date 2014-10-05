@@ -37,7 +37,7 @@ namespace twiliosvcc
             {
 
                 string notificationCallbackUrl = string.Format("{0}api/notificationCallback?guid={1}", mobileServiceAppUrl, notification.Guid.Trim());
-                notification.Message = notification.Message.Trim() + "\r\n\r\nThe message delivered with care by Twilio. Check out twilio.com";
+                notification.Message = notification.Message.Trim() + "\r\n\r\nThis message delivered with care by Twilio. To learn how you can use Twilio in your apps find @devinrader or check out twilio.com";
                 //have we sent a notification to this phone number before?
                 //await notificationsTable.Where(n => n.PhoneNumber == notification.PhoneNumber).ToListAsync();
                 
