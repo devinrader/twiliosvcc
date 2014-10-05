@@ -15,7 +15,10 @@ namespace twiliosvcc
     {
         public static void Main(string[] args)
         {
-            JobHost host = new JobHost();
+            var config = new JobHostConfiguration();
+            config.Queues.MaxPollingInterval = TimeSpan.FromMinutes(5);
+
+            JobHost host = new JobHost(config);
             host.RunAndBlock();
         }
 
