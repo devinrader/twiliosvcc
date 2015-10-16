@@ -43,7 +43,7 @@ namespace twiliosvcc
 
                 foreach (var notification in notifications)
                 {
-                    notification.Message = notification.Message + messagefooter;
+                    notification.Message = string.Format("{0}\n\r\n{1}", notification.Message, messagefooter);
 
                     //save this notification    
                     await notificationsTable.InsertAsync(notification);
