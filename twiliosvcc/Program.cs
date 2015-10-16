@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.WindowsAzure.MobileServices;
+using Microsoft.WindowsAzure.Storage;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -16,13 +17,14 @@ namespace twiliosvcc
         public static void Main(string[] args)
         {
             var config = new JobHostConfiguration();
-            config.Queues.MaxPollingInterval = TimeSpan.FromMinutes(3);
-
+            config.NameResolver = new QueueNameResolver();
+            config.Queues.MaxPollingInterval = TimeSpan.FromSeconds( int.Parse(ConfigurationManager.AppSettings["MAXPOLLINGINTERVAL"]) );
             JobHost host = new JobHost(config);
             host.RunAndBlock();
         }
 
-        public static async Task SendNotifications( [QueueTrigger("twilionotifications")] List<Notification> notifications) {
+        public static async Task SendNotifications([QueueTrigger("%targetqueuename%")] List<Notification> notifications)
+        {
 
             Console.WriteLine("Starting Bulk Notification Delivery");
 
@@ -33,27 +35,21 @@ namespace twiliosvcc
 
             IMobileServiceTable<Notification> notificationsTable = amsClient.GetTable<Notification>();
 
-            if (notifications == null)
-            {
-            }
-            else 
-            {
+            if (notifications != null) 
+            { 
+
+                string notificationCallbackUrl = string.Format("{0}api/notificationCallback", mobileServiceAppUrl);
+                string messagefooter = ConfigurationManager.AppSettings["MESSAGEFOOTER"];
+
                 foreach (var notification in notifications)
                 {
-
-                    string notificationCallbackUrl = string.Format("{0}api/notificationCallback", mobileServiceAppUrl);
-                    notification.Message = notification.Message.Trim() + ConfigurationManager.AppSettings["MESSAGEFOOTER"].Trim();
-
-                    //have we sent a notification to this phone number before?
-                    //await notificationsTable.Where(n => n.PhoneNumber == notification.PhoneNumber).ToListAsync();
-
-                    //if we have set the flag to send the instructions message
+                    notification.Message = notification.Message + messagefooter;
 
                     //save this notification    
                     await notificationsTable.InsertAsync(notification);
 
                     //rudimentary data validation
-                    if (string.IsNullOrEmpty(notification.PhoneNumber.Trim()))
+                     if (string.IsNullOrEmpty(notification.PhoneNumber.Trim()))
                     {
                         notification.Status = "InputFail";
                         await notificationsTable.UpdateAsync(notification);
@@ -62,7 +58,7 @@ namespace twiliosvcc
                     {
                         Console.WriteLine("Sending to {0}", notification.PhoneNumber);
 
-                        var result = await twilioClient.SendMessage(
+                        var result = twilioClient.SendMessage(
                             ConfigurationManager.AppSettings["FROM"],
                             notification.PhoneNumber.Trim(),
                             notification.Message,
@@ -85,6 +81,14 @@ namespace twiliosvcc
                     }
                 }
             }
+        }
+    }
+
+    public class QueueNameResolver : INameResolver
+    {
+        public string Resolve(string name)
+        {
+            return ConfigurationManager.AppSettings[name].ToString();
         }
     }
 }
