@@ -13,7 +13,6 @@ namespace twiliosvcc
         {
             this.Status = "New";
             this.MessageSid = "";
-//            this.MessageStatus = "";
             this.ErrorCode = "";
         }
 
@@ -25,17 +24,11 @@ namespace twiliosvcc
         [JsonProperty(PropertyName = "phonenumber")]
         public string PhoneNumber { get; set; }
 
-        [JsonProperty(PropertyName = "guid")]
-        public string Guid { get; set; }
-
         [JsonProperty(PropertyName = "messagesid")]
         public string MessageSid { get; set; }
 
         [JsonProperty(PropertyName = "status")]
         public string Status { get; set; }
-
-        //[JsonProperty(PropertyName = "messagesstatus")]
-        //public string MessageStatus { get; set; }
 
         [JsonProperty(PropertyName = "errorcode")]
         public string ErrorCode { get; set; }        

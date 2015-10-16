@@ -22,7 +22,7 @@ namespace twiliosvcc
             host.RunAndBlock();
         }
 
-        public static async Task SendNotifications( [QueueTrigger("twiliosvcc")] List<Notification> notifications) {
+        public static async Task SendNotifications( [QueueTrigger("twilionotifications")] List<Notification> notifications) {
 
             Console.WriteLine("Starting Bulk Notification Delivery");
 
@@ -33,50 +33,57 @@ namespace twiliosvcc
 
             IMobileServiceTable<Notification> notificationsTable = amsClient.GetTable<Notification>();
 
-            foreach (var notification in notifications)
+            if (notifications == null)
             {
-
-                string notificationCallbackUrl = string.Format("{0}api/notificationCallback?guid={1}", mobileServiceAppUrl, notification.Guid.Trim());
-                notification.Message = notification.Message.Trim() + "\r\n\r\nThis message delivered with care by code camp Platinum sponsor Twilio. To learn how you can use Twilio in your apps find @devinrader or check out twilio.com";
-                //have we sent a notification to this phone number before?
-                //await notificationsTable.Where(n => n.PhoneNumber == notification.PhoneNumber).ToListAsync();
-                
-                //if we have set the flag to send the instructions message
-
-                //save this notification    
-                await notificationsTable.InsertAsync(notification);
-
-                //rudimentary data validation
-                if (string.IsNullOrEmpty(notification.PhoneNumber.Trim()))
+            }
+            else 
+            {
+                foreach (var notification in notifications)
                 {
-                    notification.Status = "InputFail";
-                    await notificationsTable.UpdateAsync(notification);
-                }
-                else
-                {
-                    Console.WriteLine("Sending to {0}", notification.PhoneNumber);
 
-                    var result = twilioClient.SendMessage(
-                        ConfigurationManager.AppSettings["FROM"],
-                        notification.PhoneNumber.Trim(),
-                        notification.Message,
-                        notificationCallbackUrl);
+                    string notificationCallbackUrl = string.Format("{0}api/notificationCallback", mobileServiceAppUrl);
+                    notification.Message = notification.Message.Trim() + ConfigurationManager.AppSettings["MESSAGEFOOTER"].Trim();
 
-                    if (result.RestException != null)
+                    //have we sent a notification to this phone number before?
+                    //await notificationsTable.Where(n => n.PhoneNumber == notification.PhoneNumber).ToListAsync();
+
+                    //if we have set the flag to send the instructions message
+
+                    //save this notification    
+                    await notificationsTable.InsertAsync(notification);
+
+                    //rudimentary data validation
+                    if (string.IsNullOrEmpty(notification.PhoneNumber.Trim()))
                     {
-                        Console.WriteLine("Error sending to API: '{0}'", result.RestException.Message);
-                        notification.Status = "ApiFail";
-                        notification.ErrorCode = result.RestException.Code;
+                        notification.Status = "InputFail";
                         await notificationsTable.UpdateAsync(notification);
                     }
                     else
                     {
-                        Console.WriteLine("Sent to API: '{0}', Status: '{1}'", result.Sid, result.Status);
-                        notification.Status = result.Status;
-                        notification.MessageSid = result.Sid;
-                        await notificationsTable.UpdateAsync(notification);
+                        Console.WriteLine("Sending to {0}", notification.PhoneNumber);
+
+                        var result = await twilioClient.SendMessage(
+                            ConfigurationManager.AppSettings["FROM"],
+                            notification.PhoneNumber.Trim(),
+                            notification.Message,
+                            notificationCallbackUrl);
+
+                        if (result.RestException != null)
+                        {
+                            Console.WriteLine("Error sending to API: '{0}'", result.RestException.Message);
+                            notification.Status = "ApiFail";
+                            notification.ErrorCode = result.RestException.Code;
+                            await notificationsTable.UpdateAsync(notification);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Sent to API: '{0}', Status: '{1}'", result.Sid, result.Status);
+                            notification.Status = result.Status;
+                            notification.MessageSid = result.Sid;
+                            await notificationsTable.UpdateAsync(notification);
+                        }
                     }
-                }    
+                }
             }
         }
     }
